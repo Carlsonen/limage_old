@@ -1,13 +1,24 @@
-use image::{ImageResult, RgbImage};
+use image::{ImageBuffer, ImageResult, RgbImage};
 pub struct Limage {
     pub imgbuff: RgbImage,
 }
+
+// make - save
 impl Limage {
-    // make - save
     pub fn new(width: u32, height: u32) -> Self {
         Limage {
-            imgbuff: image::ImageBuffer::new(width, height),
+            imgbuff: ImageBuffer::new(width, height),
         }
+    }
+    pub fn from_color(width: u32, height: u32, color: [u8; 3]) -> Self {
+        let mut img = Limage::new(width, height);
+        for y in 0..img.height() {
+            for x in 0..img.width() {
+                img.put_rgb(x, y, color);
+            }
+        }
+
+        img
     }
     pub fn save(&self, path: &str) -> ImageResult<()> {
         self.imgbuff.save(path)
@@ -140,6 +151,7 @@ impl Limage {
         )
     }
 }
+
 // range (360 1 1)
 pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     let h = hsl[0] % 360.0;
