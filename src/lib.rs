@@ -1,4 +1,5 @@
 use image::{ImageBuffer, ImageResult, RgbImage};
+
 pub struct Limage {
     pub imgbuff: RgbImage,
 }
@@ -113,6 +114,39 @@ impl Limage {
             }
         }
     }
+    pub fn draw_circle2(&mut self, x: i32, y: i32, r: i32, color: [u8; 3]) {
+        for a in -r..=r {
+            for b in -r..=r {
+                let ix = x + a;
+                let iy = y + b;
+                if ix >= 0 && iy >= 0 && a * a + b * b < r * (r + 1) {
+                    self.put_rgb(ix as u32, iy as u32, color);
+                }
+            }
+        }
+    }
+    pub fn draw_circle3(&mut self, x: i32, y: i32, r: i32, color: [u8; 3]) {
+        for a in -r..=r {
+            for b in -r..=r {
+                let ix = x + a;
+                let iy = y + b;
+                if ix >= 0 && iy >= 0 && a * a + b * b <= r * (r + 1) {
+                    self.put_rgb(ix as u32, iy as u32, color);
+                }
+            }
+        }
+    }
+    pub fn draw_circle4(&mut self, x: i32, y: i32, r: i32, color: [u8; 3]) {
+        for a in -r..=r {
+            for b in -r..=r {
+                let ix = x + a;
+                let iy = y + b;
+                if ix >= 0 && iy >= 0 && a * a + b * b < (r + 1) * (r + 1) {
+                    self.put_rgb(ix as u32, iy as u32, color);
+                }
+            }
+        }
+    }
     pub fn draw_rectangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: [u8; 3]) {
         for x in x1..=x2 {
             for y in y1..=y2 {
@@ -177,3 +211,13 @@ pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
         ((rgb_tmp.2 + m) * 255.999) as u8,
     ]
 }
+
+pub const RED: [u8; 3] = [255,0,0];
+pub const GREEN: [u8; 3] = [0,255,0];
+pub const BLUE: [u8; 3] = [0,0,255];
+pub const YELLOW: [u8; 3] = [255,255,0];
+pub const MAGENTA: [u8; 3] = [255,0,255];
+pub const CYAN: [u8; 3] = [0,255,255];
+
+pub const BEIGE: [u8; 3] = [222,184,135];
+pub const FOREST_GREEN: [u8; 3] = [34, 139, 34];
