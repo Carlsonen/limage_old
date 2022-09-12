@@ -78,7 +78,7 @@ impl Limage {
 
         let mut longest = w.abs();
         let mut shortest = h.abs();
-        if !(longest > shortest) {
+        if longest <= shortest {
             longest = h.abs();
             shortest = w.abs();
             dy2 = match h {
@@ -93,7 +93,7 @@ impl Limage {
         for _ in 0..=longest {
             self.put_rgb(x1 as u32, y1 as u32, color);
             numerator += shortest;
-            if !(numerator < longest) {
+            if numerator >= longest {
                 numerator -= longest;
                 x1 += dx1;
                 y1 += dy1;
