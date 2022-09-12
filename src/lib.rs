@@ -4,29 +4,87 @@ pub struct Limage {
     pub imgbuff: RgbImage,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Coords {
+    Whole(i64, i64),
+    Fractional(f32, f32),
+}
+
+impl From<(i64, i64)> for Coords {
+    fn from(coords: (i64, i64)) -> Self {
+        Self::Whole(coords.0, coords.1)
+    }
+}
+
+impl From<(f32, f32)> for Coords {
+    fn from(coords: (f32, f32)) -> Self {
+        Self::Fractional(coords.0, coords.1)
+    }
+}
+
+impl From<(u32, u32)> for Coords {
+    fn from(coords: (u32, u32)) -> Self {
+        Self::Whole(coords.0 as i64, coords.1 as i64)
+    }
+}
+
+impl Coords {
+    pub fn convert(self, width: u32, height: u32) -> Result<(u32, u32), LImageError> {
+        match self {
+            Self::Whole(x, y) if x >= 0 && (x as u32) < width && y >= 0 && (y as u32) < height => {
+                Ok((x as u32, y as u32))
+            }
+            Self::Fractional(x, y) if (0. ..=1.).contains(&x) && (0. ..=1.).contains(&y) => Ok((
+                (x * (width as f32 - 1.)) as u32,
+                (y * (height as f32 - 1.)) as u32,
+            )),
+            _ => Err(LImageError::OutOfBounds),
+        }
+    }
+
+    pub fn convert_unchecked(self, width: u32, height: u32) -> (i64, i64) {
+        match self {
+            Self::Whole(x, y) => (x, y),
+            Self::Fractional(x, y) => (
+                (x * (width as f32 - 1.)) as i64,
+                (y * (height as f32 - 1.)) as i64,
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub enum LImageError {
+    OutOfBounds,
+}
+
 // make - save
 impl Limage {
     pub fn new(width: u32, height: u32) -> Self {
-        Limage {
+        Self {
             imgbuff: ImageBuffer::new(width, height),
         }
     }
-    pub fn from_color(width: u32, height: u32, color: [u8; 3]) -> Self {
-        let mut img = Limage::new(width, height);
-        for y in 0..img.height() {
-            for x in 0..img.width() {
-                img.put_rgb(x, y, color);
+
+    pub fn with_color(mut self, color: [u8; 3]) -> Self {
+        for y in 0..self.imgbuff.height() {
+            for x in 0..self.imgbuff.width() {
+                self.put_rgb((x, y).into(), color)
+                    .expect("Gaurenteed to be in bounds");
             }
         }
 
-        img
+        self
     }
+
     pub fn save(&self, path: &str) -> ImageResult<()> {
         self.imgbuff.save(path)
     }
+
     pub fn width(&self) -> u32 {
         self.imgbuff.width()
     }
+
     pub fn height(&self) -> u32 {
         self.imgbuff.height()
     }
@@ -34,32 +92,32 @@ impl Limage {
 
 // plot
 impl Limage {
-    pub fn put_rgb(&mut self, x: u32, y: u32, color: [u8; 3]) {
-        if x < self.imgbuff.width() && y < self.imgbuff.height() {
-            self.imgbuff.put_pixel(x, y, image::Rgb(color));
-        }
+    pub fn put_rgb(&mut self, pos: Coords, color: [u8; 3]) -> Result<(), LImageError> {
+        let (x, y) = pos.convert(self.width(), self.height())?;
+        self.imgbuff.put_pixel(x, y, image::Rgb(color));
+        Ok(())
     }
-    pub fn put_frgb(&mut self, x: u32, y: u32, color: [f32; 3]) {
-        if x < self.imgbuff.width() && y < self.imgbuff.height() {
-            let rgb = [
-                (color[0] * 255.999) as u8,
-                (color[1] * 255.999) as u8,
-                (color[2] * 255.999) as u8,
-            ];
-            self.imgbuff.put_pixel(x, y, image::Rgb(rgb));
-        }
+
+    pub fn put_frgb(&mut self, pos: Coords, color: [f32; 3]) -> Result<(), LImageError> {
+        let rgb = [
+            f32::clamp(color[0] * 255., 0., 255.) as u8,
+            f32::clamp(color[1] * 255., 0., 255.) as u8,
+            f32::clamp(color[2] * 255., 0., 255.) as u8,
+        ];
+        self.put_rgb(pos, rgb)
     }
-    pub fn put_hsl(&mut self, x: u32, y: u32, hsl: [f32; 3]) {
+
+    pub fn put_hsl(&mut self, pos: Coords, hsl: [f32; 3]) -> Result<(), LImageError> {
         let rgb = hsl_to_rgb(hsl);
-        self.put_rgb(x, y, rgb);
+        self.put_rgb(pos, rgb)
     }
 }
 
 // shapes
 impl Limage {
-    pub fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: [u8; 3]) {
-        let mut x1 = x1;
-        let mut y1 = y1;
+    pub fn draw_line(&mut self, p1: Coords, p2: Coords, color: [u8; 3]) {
+        let (mut x1, mut y1) = p1.convert_unchecked(self.width(), self.height());
+        let (x2, y2) = p2.convert_unchecked(self.width(), self.height());
         let w = x2 - x1;
         let h = y2 - y1;
 
@@ -91,7 +149,8 @@ impl Limage {
 
         let mut numerator = longest >> 1;
         for _ in 0..=longest {
-            self.put_rgb(x1 as u32, y1 as u32, color);
+            // TODO: Add logging to this?
+            self.put_rgb((x1 as u32, y1 as u32).into(), color).ok();
             numerator += shortest;
             if numerator >= longest {
                 numerator -= longest;
@@ -103,86 +162,78 @@ impl Limage {
             }
         }
     }
-    pub fn draw_circle(&mut self, x: i32, y: i32, r: i32, color: [u8; 3]) {
+
+    pub fn draw_circle(&mut self, center: Coords, r: i32, color: [u8; 3]) {
+        let (x, y) = center.convert_unchecked(self.width(), self.height());
+        let r = r as i64;
+
         for a in -r..=r {
             for b in -r..=r {
                 let ix = x + a;
                 let iy = y + b;
                 if ix >= 0 && iy >= 0 && a * a + b * b <= r * r {
-                    self.put_rgb(ix as u32, iy as u32, color);
+                    self.put_rgb((ix as u32, iy as u32).into(), color).ok();
                 }
             }
         }
     }
-    pub fn draw_circle2(&mut self, x: i32, y: i32, r: i32, color: [u8; 3]) {
+
+    pub fn draw_circle2(&mut self, center: Coords, r: i32, color: [u8; 3]) {
+        let (x, y) = center.convert_unchecked(self.width(), self.height());
+        let r = r as i64;
+
         for a in -r..=r {
             for b in -r..=r {
                 let ix = x + a;
                 let iy = y + b;
                 if ix >= 0 && iy >= 0 && a * a + b * b < r * (r + 1) {
-                    self.put_rgb(ix as u32, iy as u32, color);
+                    self.put_rgb((ix as u32, iy as u32).into(), color).ok();
                 }
             }
         }
     }
-    pub fn draw_circle3(&mut self, x: i32, y: i32, r: i32, color: [u8; 3]) {
+
+    pub fn draw_circle3(&mut self, center: Coords, r: i32, color: [u8; 3]) {
+        let (x, y) = center.convert_unchecked(self.width(), self.height());
+        let r = r as i64;
+
         for a in -r..=r {
             for b in -r..=r {
                 let ix = x + a;
                 let iy = y + b;
                 if ix >= 0 && iy >= 0 && a * a + b * b <= r * (r + 1) {
-                    self.put_rgb(ix as u32, iy as u32, color);
+                    self.put_rgb((ix as u32, iy as u32).into(), color).ok();
                 }
             }
         }
     }
-    pub fn draw_circle4(&mut self, x: i32, y: i32, r: i32, color: [u8; 3]) {
+
+    pub fn draw_circle4(&mut self, center: Coords, r: i32, color: [u8; 3]) {
+        let (x, y) = center.convert_unchecked(self.width(), self.height());
+        let r = r as i64;
+
         for a in -r..=r {
             for b in -r..=r {
                 let ix = x + a;
                 let iy = y + b;
                 if ix >= 0 && iy >= 0 && a * a + b * b < (r + 1) * (r + 1) {
-                    self.put_rgb(ix as u32, iy as u32, color);
+                    self.put_rgb((ix as u32, iy as u32).into(), color).ok();
                 }
             }
         }
     }
-    pub fn draw_rectangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: [u8; 3]) {
+
+    pub fn draw_rectangle(&mut self, topleft: Coords, bottomright: Coords, color: [u8; 3]) {
+        let (x1, y1) = topleft.convert_unchecked(self.width(), self.height());
+        let (x2, y2) = bottomright.convert_unchecked(self.width(), self.height());
+
         for x in x1..=x2 {
             for y in y1..=y2 {
                 if x >= 0 && y >= 0 {
-                    self.put_rgb(x as u32, y as u32, color);
+                    self.put_rgb((x as u32, y as u32).into(), color).ok();
                 }
             }
         }
-    }
-}
-impl Limage {
-    pub fn fdraw_line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, color: [u8; 3]) {
-        self.draw_line(
-            (x1 * self.width() as f32 - 0.001) as i32,
-            (y1 * self.height() as f32 - 0.001) as i32,
-            (x2 * self.width() as f32 - 0.001) as i32,
-            (y2 * self.height() as f32 - 0.001) as i32,
-            color,
-        )
-    }
-    pub fn fdraw_circle(&mut self, x: f32, y: f32, r: f32, color: [u8; 3]) {
-        self.draw_circle(
-            (x * self.width() as f32 - 0.001) as i32,
-            (y * self.height() as f32 - 0.001) as i32,
-            (r * self.height() as f32 - 0.001) as i32,
-            color,
-        )
-    }
-    pub fn fdraw_rectangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, color: [u8; 3]) {
-        self.draw_rectangle(
-            (x1 * self.width() as f32 - 0.001) as i32,
-            (y1 * self.width() as f32 - 0.001) as i32,
-            (x2 * self.width() as f32 - 0.001) as i32,
-            (y2 * self.width() as f32 - 0.001) as i32,
-            color,
-        )
     }
 }
 
@@ -212,12 +263,12 @@ pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     ]
 }
 
-pub const RED: [u8; 3] = [255,0,0];
-pub const GREEN: [u8; 3] = [0,255,0];
-pub const BLUE: [u8; 3] = [0,0,255];
-pub const YELLOW: [u8; 3] = [255,255,0];
-pub const MAGENTA: [u8; 3] = [255,0,255];
-pub const CYAN: [u8; 3] = [0,255,255];
+pub const RED: [u8; 3] = [255, 0, 0];
+pub const GREEN: [u8; 3] = [0, 255, 0];
+pub const BLUE: [u8; 3] = [0, 0, 255];
+pub const YELLOW: [u8; 3] = [255, 255, 0];
+pub const MAGENTA: [u8; 3] = [255, 0, 255];
+pub const CYAN: [u8; 3] = [0, 255, 255];
 
-pub const BEIGE: [u8; 3] = [222,184,135];
+pub const BEIGE: [u8; 3] = [222, 184, 135];
 pub const FOREST_GREEN: [u8; 3] = [34, 139, 34];
