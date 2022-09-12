@@ -1,5 +1,12 @@
 use image::{ImageBuffer, ImageResult, RgbImage};
 
+mod shape_iterators;
+use shape_iterators::*;
+
+pub fn rectangle(x: i32, y: i32, w: i32, h: i32) -> Rectangle {
+    Rectangle::new(x, y, w, h)
+}
+
 pub struct Limage {
     pub imgbuff: RgbImage,
 }
