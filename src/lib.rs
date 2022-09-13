@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use image::{ImageBuffer, ImageResult, RgbImage};
 
 pub struct Limage {
@@ -77,7 +79,7 @@ impl Limage {
         self
     }
 
-    pub fn save(&self, path: &str) -> ImageResult<()> {
+    pub fn save<Q: AsRef<Path>>(&self, path: Q) -> ImageResult<()> {
         self.imgbuff.save(path)
     }
 
