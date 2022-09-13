@@ -1,6 +1,9 @@
 use std::path::Path;
 
 use image::{ImageBuffer, ImageResult, RgbImage};
+use patterns::Pattern;
+
+pub mod patterns;
 
 pub struct Limage {
     pub imgbuff: RgbImage,
@@ -31,7 +34,7 @@ impl From<(u32, u32)> for Coords {
 }
 
 impl Coords {
-    pub fn convert(self, width: u32, height: u32) -> Result<(u32, u32), LImageError> {
+    pub fn convert(self, width: u32, height: u32) -> Result<(u32, u32), LimageError> {
         match self {
             Self::Whole(x, y) if x >= 0 && (x as u32) < width && y >= 0 && (y as u32) < height => {
                 Ok((x as u32, y as u32))
@@ -40,7 +43,7 @@ impl Coords {
                 (x * (width as f32 - 1.)) as u32,
                 (y * (height as f32 - 1.)) as u32,
             )),
-            _ => Err(LImageError::OutOfBounds),
+            _ => Err(LimageError::OutOfBounds),
         }
     }
 
@@ -56,7 +59,7 @@ impl Coords {
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum LImageError {
+pub enum LimageError {
     OutOfBounds,
 }
 
@@ -79,6 +82,11 @@ impl Limage {
         self
     }
 
+    pub fn with_pattern(mut self, p: impl Pattern) -> Self {
+        p.draw(&mut self);
+        self
+    }
+
     pub fn save<Q: AsRef<Path>>(&self, path: Q) -> ImageResult<()> {
         self.imgbuff.save(path)
     }
@@ -94,13 +102,13 @@ impl Limage {
 
 // plot
 impl Limage {
-    pub fn put_rgb(&mut self, pos: Coords, color: [u8; 3]) -> Result<(), LImageError> {
+    pub fn put_rgb(&mut self, pos: Coords, color: [u8; 3]) -> Result<(), LimageError> {
         let (x, y) = pos.convert(self.width(), self.height())?;
         self.imgbuff.put_pixel(x, y, image::Rgb(color));
         Ok(())
     }
 
-    pub fn put_frgb(&mut self, pos: Coords, color: [f32; 3]) -> Result<(), LImageError> {
+    pub fn put_frgb(&mut self, pos: Coords, color: [f32; 3]) -> Result<(), LimageError> {
         let rgb = [
             f32::clamp(color[0] * 255., 0., 255.) as u8,
             f32::clamp(color[1] * 255., 0., 255.) as u8,
@@ -109,7 +117,7 @@ impl Limage {
         self.put_rgb(pos, rgb)
     }
 
-    pub fn put_hsl(&mut self, pos: Coords, hsl: [f32; 3]) -> Result<(), LImageError> {
+    pub fn put_hsl(&mut self, pos: Coords, hsl: [f32; 3]) -> Result<(), LimageError> {
         let rgb = hsl_to_rgb(hsl);
         self.put_rgb(pos, rgb)
     }
