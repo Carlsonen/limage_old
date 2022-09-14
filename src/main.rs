@@ -1,4 +1,4 @@
-use limage::{patterns::Grid, Limage};
+use limage::prelude::*;
 
 fn main() {
     let img = Limage::new(360, 360)

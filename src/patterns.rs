@@ -1,5 +1,7 @@
+use crate::core::Limage;
+
 pub trait Pattern {
-    fn draw(self, img: &mut super::Limage);
+    fn draw(self, img: &mut Limage);
 }
 
 // TODO: Different alignments on grid
@@ -28,7 +30,7 @@ impl Grid {
 }
 
 impl Pattern for Grid {
-    fn draw(self, img: &mut super::Limage) {
+    fn draw(self, img: &mut Limage) {
         let (width, height) = (img.width(), img.height());
 
         let mut x = self.x_skip + self.width / 2;
