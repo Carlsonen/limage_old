@@ -74,6 +74,11 @@ impl Limage {
         let rgb = hsl_to_rgb(hsl);
         self.put_rgb(pos, rgb)
     }
+
+    pub fn get_color(&self, pos: Coords) -> Result<&image::Rgb<u8>, LimageError> {
+        let (x, y) = pos.convert(self.width(), self.height())?;
+        Ok(self.imgbuff.get_pixel(x, y))
+    }
 }
 
 // shapes
@@ -112,7 +117,6 @@ impl Limage {
 
         let mut numerator = longest >> 1;
         for _ in 0..=longest {
-            // TODO: Add logging to this?
             self.put_rgb((x1 as u32, y1 as u32).into(), color).ok();
             numerator += shortest;
             if numerator >= longest {
@@ -220,10 +224,62 @@ pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     };
 
     [
-        ((rgb_tmp.0 + m) * 255.999) as u8,
-        ((rgb_tmp.1 + m) * 255.999) as u8,
-        ((rgb_tmp.2 + m) * 255.999) as u8,
+        ((rgb_tmp.0 + m) * 256.) as u8,
+        ((rgb_tmp.1 + m) * 256.) as u8,
+        ((rgb_tmp.2 + m) * 256.) as u8,
     ]
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn creates_image() {
+        use super::Limage;
+
+        let limg = Limage::new(100, 100);
+        assert_eq!(limg.width(), 100);
+        assert_eq!(limg.height(), 100);
+    }
+
+    #[test]
+    fn creates_image_with_color() {
+        use super::Limage;
+
+        let limg = Limage::new(100, 100).with_color([1u8, 1u8, 1u8]);
+        assert_eq!(limg.width(), 100);
+        assert_eq!(limg.height(), 100);
+
+        for i in 0..limg.width() {
+            for j in 0..limg.height() {
+                let color = limg.get_color((i, j).into());
+                assert!(color.is_ok());
+                let color = *color.unwrap();
+                assert_eq!(color, image::Rgb([1u8, 1u8, 1u8]));
+            }
+        }
+    }
+
+    // Maybe don't need this due to Coords tests?
+    #[test]
+    fn checks_get_bounds() {
+        use super::Limage;
+
+        let limg = Limage::new(100, 100);
+        assert!(limg.get_color((0i64, 0i64).into()).is_ok());
+        assert!(limg.get_color((-1i64, 0i64).into()).is_err());
+        assert!(limg.get_color((0i64, -1i64).into()).is_err());
+        assert!(limg.get_color((100i64, 0i64).into()).is_err());
+        assert!(limg.get_color((0i64, 100i64).into()).is_err());
+    }
+
+    #[test]
+    fn hsl_converts() {
+        use super::hsl_to_rgb;
+
+        assert_eq!(hsl_to_rgb([0., 0., 0.]), [0, 0, 0]);
+        assert_eq!(hsl_to_rgb([120., 0.5, 0.25]), [32, 96, 32]);
+        assert_eq!(hsl_to_rgb([0., 0., 100.]), [255, 255, 255]);
+    }
 }
 
 pub const RED: [u8; 3] = [255, 0, 0];

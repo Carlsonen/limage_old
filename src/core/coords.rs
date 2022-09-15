@@ -46,3 +46,122 @@ impl Coords {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn accepts_u32() {
+        use super::Coords;
+
+        let c: Coords = (1u32, 1u32).into();
+        assert_eq!(Coords::Whole(1, 1), c);
+    }
+
+    #[test]
+    fn accepts_i64() {
+        use super::Coords;
+
+        let c: Coords = (1i64, 1i64).into();
+        assert_eq!(Coords::Whole(1, 1), c);
+    }
+
+    #[test]
+    fn accepts_f32() {
+        use super::Coords;
+
+        let c: Coords = (1., 1.).into();
+        assert_eq!(Coords::Fractional(1., 1.), c);
+    }
+
+    #[test]
+    fn converts_whole() {
+        use super::Coords;
+
+        let c: Coords = (1u32, 1u32).into();
+        assert_eq!(c.convert(100, 100), Ok((1u32, 1u32)));
+    }
+
+    #[test]
+    fn checks_whole_bounds() {
+        use super::Coords;
+        use crate::core::LimageError;
+
+        let c: Coords = (1000u32, 1000u32).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+
+        let c: Coords = (100u32, 0u32).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+
+        let c: Coords = (-1i64, 0i64).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+
+        let c: Coords = (0u32, 100u32).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+
+        let c: Coords = (0i64, -1i64).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+    }
+
+    #[test]
+    fn returns_whole_unchecked() {
+        use super::Coords;
+
+        let c: Coords = (-1i64, 1i64).into();
+        assert_eq!(c.convert_unchecked(100, 100), (-1, 1));
+
+        let c: Coords = (100i64, 0i64).into();
+        assert_eq!(c.convert_unchecked(100, 100), (100, 0));
+
+        let c: Coords = (1i64, -1i64).into();
+        assert_eq!(c.convert_unchecked(100, 100), (1, -1));
+
+        let c: Coords = (0i64, 100i64).into();
+        assert_eq!(c.convert_unchecked(100, 100), (0, 100));
+    }
+
+    #[test]
+    fn converts_fractional() {
+        use super::Coords;
+
+        let c: Coords = (1., 1.).into();
+        assert_eq!(c.convert(100, 100), Ok((99, 99)));
+
+        let c: Coords = (0., 0.).into();
+        assert_eq!(c.convert(100, 100), Ok((0, 0)));
+    }
+
+    #[test]
+    fn checks_fractional_bounds() {
+        use super::Coords;
+        use crate::core::LimageError;
+
+        let c: Coords = (2., 0.).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+
+        let c: Coords = (-1., 0.).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+
+        let c: Coords = (0., 2.).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+
+        let c: Coords = (0., -1.).into();
+        assert_eq!(c.convert(100, 100), Err(LimageError::OutOfBounds));
+    }
+
+    #[test]
+    fn returns_fractional_unchecked() {
+        use super::Coords;
+
+        let c: Coords = (2., 0.).into();
+        assert_eq!(c.convert_unchecked(100, 100), (198, 0));
+
+        let c: Coords = (-1., 0.).into();
+        assert_eq!(c.convert_unchecked(100, 100), (-99, 0));
+
+        let c: Coords = (0., 2.).into();
+        assert_eq!(c.convert_unchecked(100, 100), (0, 198));
+
+        let c: Coords = (0., -1.).into();
+        assert_eq!(c.convert_unchecked(100, 100), (0, -99));
+    }
+}
