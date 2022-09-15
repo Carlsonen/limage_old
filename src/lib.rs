@@ -6,6 +6,9 @@ use shape_iterators::*;
 pub fn rectangle(x: i32, y: i32, w: i32, h: i32) -> Rectangle {
     Rectangle::new(x, y, w, h)
 }
+pub fn circle(x: i32, y: i32, radius: i32) -> Circle {
+    Circle::new(x, y, radius)
+}
 
 pub struct Limage {
     pub imgbuff: RgbImage,
@@ -219,12 +222,12 @@ pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     ]
 }
 
-pub const RED: [u8; 3] = [255,0,0];
-pub const GREEN: [u8; 3] = [0,255,0];
-pub const BLUE: [u8; 3] = [0,0,255];
-pub const YELLOW: [u8; 3] = [255,255,0];
-pub const MAGENTA: [u8; 3] = [255,0,255];
-pub const CYAN: [u8; 3] = [0,255,255];
+pub const RED: [u8; 3] = [255, 0, 0];
+pub const GREEN: [u8; 3] = [0, 255, 0];
+pub const BLUE: [u8; 3] = [0, 0, 255];
+pub const YELLOW: [u8; 3] = [255, 255, 0];
+pub const MAGENTA: [u8; 3] = [255, 0, 255];
+pub const CYAN: [u8; 3] = [0, 255, 255];
 
-pub const BEIGE: [u8; 3] = [222,184,135];
+pub const BEIGE: [u8; 3] = [222, 184, 135];
 pub const FOREST_GREEN: [u8; 3] = [34, 139, 34];
