@@ -1,4 +1,4 @@
-use image::{ImageBuffer, ImageResult, RgbImage};
+use image::{ImageBuffer, ImageResult, RgbaImage, Pixel};
 
 mod shiterators;
 use shiterators::*;
@@ -10,14 +10,21 @@ pub fn rectangle(p1: (i32, i32), p2: (i32, i32)) -> Rectangle {
 }
 pub fn circle(origin: (i32, i32), radius: u32) -> Circle {
     let (x, y) = origin;
-    Circle::new(x, y, radius as i32)
+    Circle::new((x, y), radius)
+}
+pub fn disc(origin: (i32, i32), radius: u32) -> Disc {
+    let (x, y) = origin;
+    Disc::new(x, y, radius as i32)
 }
 pub fn line(p1: (i32, i32), p2: (i32, i32)) -> Line {
-    Line::new(p1.0, p1.1, p2.0, p2.1)
+    Line::new(p1, p2)
+}
+pub fn path(points: &Vec<(i32, i32)>) -> Path {
+    Path::new(points)
 }
 
 pub struct Limage {
-    pub imgbuff: RgbImage,
+    pub imgbuff: RgbaImage,
 }
 
 impl Limage {
@@ -29,7 +36,7 @@ impl Limage {
     pub fn with_color(mut self, color: [u8; 3]) -> Self {
         for y in 0..self.height() {
             for x in 0..self.width() {
-                self.imgbuff.put_pixel(x, y, image::Rgb(color));
+                self.imgbuff.put_pixel(x, y, image::Rgb(color).to_rgba());
             }
         }
 
@@ -53,11 +60,45 @@ impl Limage {
     pub fn put_rgb(&mut self, p: (i32, i32), color: [u8; 3]) {
         if self.in_bounds(p) {
             let (x, y) = p;
-            self.imgbuff.put_pixel(x as u32, y as u32, image::Rgb(color));
+            self.imgbuff.put_pixel(x as u32, y as u32, image::Rgb(color).to_rgba());
+        }
+    }
+    pub fn put_rgba(&mut self, p: (i32, i32), color: [u8; 4]) {
+        if self.in_bounds(p) {
+            let (x, y) = p;
+            self.imgbuff.put_pixel(x as u32, y as u32, image::Rgba(color));
+        }
+    }
+    pub fn get_rgba(&self, p: (i32, i32)) -> Option<[u8; 4]> {
+        if self.in_bounds(p) {
+            let (x, y) = p;
+            return Some(self.imgbuff.get_pixel(x as u32, y as u32).0);
+        }
+        None
+    }
+    pub fn paste(&mut self, position: (i32, i32), other: &Limage) {
+        for p in rectangle((0, 0), (other.width() as i32 -1, other.height() as i32 -1)) {
+            let pos = (position.0 + p.0, position.1 + p.1);
+            if self.in_bounds(pos) {
+                let old_color = self.get_rgba(pos).unwrap();
+                let color = other.get_rgba(p).unwrap();
+                let color = blend_color(old_color, color);
+                self.put_rgba(pos, color);
+            }
         }
     }
 }
 
+// straight up wrong but can be fixed another time
+pub fn blend_color(old: [u8; 4], new: [u8; 4]) -> [u8; 4] {
+    let a = new[3] as f32 / 255.;
+    let b = 1. - a;
+    let red = b * old[0] as f32 + a * new[0] as f32;
+    let green = b * old[1] as f32 + a * new[1] as f32;
+    let blue = b * old[2] as f32 + a * new[2] as f32;
+    let a = a.max(old[3] as f32 / 255.) * 255.999;
+    [red as u8, green as u8, blue as u8, a as u8]
+}
 // range (360 1 1)
 pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     let h = hsl[0] % 360.0;
