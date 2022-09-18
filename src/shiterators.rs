@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 
 pub struct Rectangle {
     pos_x: i32,
@@ -7,6 +8,7 @@ pub struct Rectangle {
     step_y: i32,
     x: i32,
     y: i32,
+    finished: bool
 }
 impl Rectangle {
     pub fn new(x: i32, y: i32, w: i32, h: i32) -> Self {
@@ -27,6 +29,7 @@ impl Rectangle {
             step_y: step_y,
             x: x,
             y: y,
+            finished: false
         }
     }
 }
@@ -34,33 +37,86 @@ impl Iterator for Rectangle {
     type Item = (i32, i32);
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.finished {
+            return None;
+        }
+        let p = (self.x, self.y);
         if self.x == self.width {
-            self.y += self.step_y;
             if self.y == self.height {
-                return None;
+                self.finished = true;
             }
+            self.y += self.step_y;
             self.x = self.pos_x;
         }
-        self.x += self.step_x;
-        Some((self.x - 1, self.y))
+        else {
+            self.x += self.step_x;
+        }
+        Some(p)
     }
 }
 
 pub struct Circle {
+    last_pos: (i32, i32),
+    last_i: i32,
+    origin: (i32, i32),
+    radius: i32,
+    is_done: bool
+}
+impl Circle {
+    pub fn new(origin: (i32, i32), radius: u32) -> Self {
+        Circle {last_pos: (origin.0 - 1, origin.1 - radius as i32), last_i: 1, origin: origin, radius: radius as i32, is_done: false }
+    }
+}
+impl Iterator for Circle {
+    type Item = (i32, i32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.is_done {
+            return None;
+        }
+        if self.radius == 0 {
+            self.is_done = true;
+            return Some(self.origin);
+        }
+        let pos = vec![
+            (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)
+            ];
+        let mut pos_iter = pos.iter().cycle();
+        for _ in 0..(self.last_i % 8) {
+            let _ = pos_iter.next();
+        }
+        loop {
+            let coord: &(i32, i32) = pos_iter.next().unwrap();
+            let coord = (coord.0 + self.last_pos.0, coord.1 + self.last_pos.1);
+            let c = (coord.0 - self.origin.0, coord.1 - self.origin.1);
+            self.last_i += 1;
+            if c.0 * c.0 + c.1 * c.1 <= self.radius * (1 + self.radius) {
+                if coord.0 == self.origin.0 - 1 && coord.1 == self.origin.1 - self.radius {
+                    self.is_done = true;
+                }
+                self.last_i -= 2;
+                self.last_pos = coord;
+                return Some(coord);
+            }
+        }
+    }
+}
+
+pub struct Disc {
     bounds: Rectangle,
     origin: (i32, i32),
     radius: i32,
 }
-impl Circle {
+impl Disc {
     pub fn new(x: i32, y: i32, radius: i32) -> Self {
-        Circle {
+        Disc {
             bounds: Rectangle::new(x - radius, y - radius, x + radius + 1, y + radius + 1),
             origin: (x, y),
             radius,
         }
     }
 }
-impl Iterator for Circle {
+impl Iterator for Disc {
     type Item = (i32, i32);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -92,9 +148,9 @@ pub struct Line {
     finished: bool
 }
 impl Line {
-    pub fn new(x1: i32, y1: i32, x2: i32, y2: i32) -> Self {
-        let mut x1 = x1;
-        let mut y1 = y1;
+    pub fn new(p1: (i32, i32), p2: (i32, i32)) -> Self {
+        let (x1, y1) = p1;
+        let (x2, y2) = p2;
         let w = x2 - x1;
         let h = y2 - y1;
 
@@ -124,7 +180,7 @@ impl Line {
             dx2 = 0;
         }
 
-        let mut numerator = longest >> 1;
+        let numerator = longest >> 1;
         Line {
             x1: x1,
             y1: y1,
@@ -162,5 +218,70 @@ impl Iterator for Line {
             self.finished = true;
         }
         return Some((x, y));
+    }
+}
+
+pub struct Path {
+    points: VecDeque<(i32, i32)>,
+    last_point: Option<(i32, i32)>,
+    curr_line: Line
+}
+impl Path {
+    pub fn new(points: &Vec<(i32, i32)>) -> Self {
+        if points.is_empty() {
+            panic!("why the fuck would you input an empty list of points");
+        }
+        if points.len() == 1 {
+            return Path {
+                points: VecDeque::from(vec![points[0], points[0]]),
+                last_point: None,
+                curr_line: Line::new(points[0], points[0])
+            }
+        }
+        return Path {
+                points: VecDeque::from(points.clone()),
+                last_point: None,
+                curr_line: Line::new(points[0], points[1])
+            }
+    }
+}
+impl Iterator for Path {
+    type Item = (i32, i32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.curr_line.next() {
+                Some(p) => {
+                    match self.last_point {
+                        Some(q) => {
+                            if p == q {
+                                continue;
+                            }
+                            self.last_point = Some(p);
+                            return Some(p);
+                        },
+                        None => {return Some(p);}
+                    }
+                }
+                None => {
+                    loop {
+                        if self.points.len() <= 2 {
+                            return None;
+                        }
+                        self.points.remove(0);
+                        let p1 = self.points[0];
+                        let p2 = self.points[1];
+                        if p1 == p2 {
+                            continue;
+                        }
+                        else {
+                            self.curr_line = Line::new(p1, p2);
+                            let _ = self.curr_line.next();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
