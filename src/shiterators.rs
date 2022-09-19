@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use crate::core::Limage;
+
 pub mod prelude;
 
 pub struct Rectangle {
@@ -303,6 +305,74 @@ impl Iterator for Path {
                         break;
                     }
                 },
+            }
+        }
+    }
+}
+
+pub struct Text {
+    position: (i32, i32),
+    text: String,
+    size: i32,
+    font_sheet: Limage,
+    current_index: usize,
+    current_box: Rectangle,
+}
+
+impl Text {
+    pub fn new(position: (i32, i32), text: String, size: u32) -> Self {
+        Text {
+            position: position,
+            font_sheet: Limage::open("assets/font.png").unwrap(),
+            text: text,
+            size: size as i32,
+            current_index: 0,
+            current_box: Rectangle::new(0, 0, 6 * size as i32 - 1, 12 * size as i32 - 1)
+        }
+    }
+}
+
+impl Iterator for Text {
+    type Item = (i32, i32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_index == self.text.len() {
+            return None;
+        }
+        
+        loop {
+            let c = self.text.as_bytes()[self.current_index];
+
+            let char_index = match c {
+                c if c >= 32 && c <= 126 => {
+                    (c - 32) as i32
+                }
+                c if c >= 161 => {
+                    0
+                } 
+                _ => {
+                    0
+                }
+            };
+            match self.current_box.next() {
+                Some((x, y)) => {
+                    let pos = (x / self.size + 6 * (char_index % 21), y / self.size + 12 * (char_index / 21));
+                    let sample = self.font_sheet.get_rgba(pos).unwrap();
+                    if sample == [255; 4] {
+                        let shit = (self.position.0 + self.size * 6 * self.current_index as i32 + x, self.position.1 + y);
+                        return Some(shit);
+                    }
+                    else {
+                        continue;
+                    }
+                }
+                None => {
+                    self.current_index += 1;
+                    if self.current_index == self.text.len() {
+                        return None;
+                    }
+                    self.current_box = Rectangle::new(0, 0, 6 * self.size - 1, 12 * self.size - 1);
+                }
             }
         }
     }

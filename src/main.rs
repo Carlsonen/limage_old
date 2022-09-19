@@ -1,17 +1,12 @@
-use limage::prelude::*;
+use limage::{prelude::*, shiterators::Text};
 
 fn main() {
-    let mut img = Limage::new(501, 501).with_color(RED);
+    let mut img = Limage::new(600, 100).with_color([10; 3]);
 
-    for p in Circle::new((250, 250), 100) {
-        img.put_rgb(p, GREEN);
+    for p in Text::new((30, 20), "Qwerasd oscar91 =)".to_string(), 5) {
+        let hue = p.0 - 30;
+        img.put_rgb(p, hsl_to_rgb([hue as f32, 1.0, 0.5]));
     }
 
-    for o in Line::new((10, 10), (490, 490)).step_by(7) {
-        for p in Circle::new(o, 10) {
-            img.put_rgb(p, GREEN);
-        }
-    }
-
-    img.save("shit.png").unwrap();
+    img.save("text.png").unwrap();
 }
