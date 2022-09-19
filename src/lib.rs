@@ -3,6 +3,8 @@ use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
 mod shiterators;
 use shiterators::*;
 
+pub mod bezier;
+
 pub fn rectangle(p1: (i32, i32), p2: (i32, i32)) -> Rectangle {
     let (x, y) = p1;
     let (w, h) = p2;
