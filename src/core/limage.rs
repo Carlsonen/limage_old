@@ -14,6 +14,18 @@ impl Limage {
         }
     }
 
+    pub fn open(path: &str) -> Result<Limage, String> {
+        let result = image::open(path);
+        match result {
+            Ok(file) => {
+                return Ok(Limage { imgbuff: file.into_rgba8() });
+            }
+            Err(_) => {
+                return Err(format!("Could not open file {}", path));
+            } 
+        }
+    }
+
     pub fn with_color(mut self, color: [u8; 3]) -> Self {
         for y in 0..self.height() {
             for x in 0..self.width() {
