@@ -1,4 +1,4 @@
-use image::{ImageBuffer, ImageResult, RgbaImage, Pixel};
+use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
 
 mod shiterators;
 use shiterators::*;
@@ -71,13 +71,15 @@ impl Limage {
     pub fn put_rgb(&mut self, p: (i32, i32), color: [u8; 3]) {
         if self.in_bounds(p) {
             let (x, y) = p;
-            self.imgbuff.put_pixel(x as u32, y as u32, image::Rgb(color).to_rgba());
+            self.imgbuff
+                .put_pixel(x as u32, y as u32, image::Rgb(color).to_rgba());
         }
     }
     pub fn put_rgba(&mut self, p: (i32, i32), color: [u8; 4]) {
         if self.in_bounds(p) {
             let (x, y) = p;
-            self.imgbuff.put_pixel(x as u32, y as u32, image::Rgba(color));
+            self.imgbuff
+                .put_pixel(x as u32, y as u32, image::Rgba(color));
         }
     }
     pub fn get_rgba(&self, p: (i32, i32)) -> Option<[u8; 4]> {
@@ -88,7 +90,10 @@ impl Limage {
         None
     }
     pub fn paste(&mut self, position: (i32, i32), other: &Limage) {
-        for p in rectangle((0, 0), (other.width() as i32 -1, other.height() as i32 -1)) {
+        for p in rectangle(
+            (0, 0),
+            (other.width() as i32 - 1, other.height() as i32 - 1),
+        ) {
             let pos = (position.0 + p.0, position.1 + p.1);
             if self.in_bounds(pos) {
                 let old_color = self.get_rgba(pos).unwrap();
@@ -130,9 +135,9 @@ pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     };
 
     [
-        ((rgb_tmp.0 + m) * 255.999) as u8,
-        ((rgb_tmp.1 + m) * 255.999) as u8,
-        ((rgb_tmp.2 + m) * 255.999) as u8,
+        ((rgb_tmp.0 + m) * 256.) as u8,
+        ((rgb_tmp.1 + m) * 256.) as u8,
+        ((rgb_tmp.2 + m) * 256.) as u8,
     ]
 }
 
@@ -145,3 +150,15 @@ pub const CYAN: [u8; 3] = [0, 255, 255];
 
 pub const BEIGE: [u8; 3] = [222, 184, 135];
 pub const FOREST_GREEN: [u8; 3] = [34, 139, 34];
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn hsl_is_correct() {
+        use super::hsl_to_rgb;
+
+        assert_eq!(hsl_to_rgb([0., 0., 0.]), [0, 0, 0]);
+        assert_eq!(hsl_to_rgb([360., 0.5, 1.]), [255, 255, 255]);
+        assert_eq!(hsl_to_rgb([120., 0.5, 0.25]), [32, 96, 32]);
+    }
+}
