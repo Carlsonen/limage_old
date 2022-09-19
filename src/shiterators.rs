@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+pub mod prelude;
+
 pub struct Rectangle {
     pos_x: i32,
     width: i32,
@@ -8,8 +10,9 @@ pub struct Rectangle {
     step_y: i32,
     x: i32,
     y: i32,
-    finished: bool
+    finished: bool,
 }
+
 impl Rectangle {
     pub fn new(x: i32, y: i32, w: i32, h: i32) -> Self {
         let step_x = match w {
@@ -29,10 +32,11 @@ impl Rectangle {
             step_y: step_y,
             x: x,
             y: y,
-            finished: false
+            finished: false,
         }
     }
 }
+
 impl Iterator for Rectangle {
     type Item = (i32, i32);
 
@@ -47,8 +51,7 @@ impl Iterator for Rectangle {
             }
             self.y += self.step_y;
             self.x = self.pos_x;
-        }
-        else {
+        } else {
             self.x += self.step_x;
         }
         Some(p)
@@ -60,13 +63,21 @@ pub struct Circle {
     last_i: i32,
     origin: (i32, i32),
     radius: i32,
-    is_done: bool
+    is_done: bool,
 }
+
 impl Circle {
     pub fn new(origin: (i32, i32), radius: u32) -> Self {
-        Circle {last_pos: (origin.0 - 1, origin.1 - radius as i32), last_i: 1, origin: origin, radius: radius as i32, is_done: false }
+        Circle {
+            last_pos: (origin.0 - 1, origin.1 - radius as i32),
+            last_i: 1,
+            origin: origin,
+            radius: radius as i32,
+            is_done: false,
+        }
     }
 }
+
 impl Iterator for Circle {
     type Item = (i32, i32);
 
@@ -79,8 +90,15 @@ impl Iterator for Circle {
             return Some(self.origin);
         }
         let pos = vec![
-            (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)
-            ];
+            (0, -1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+            (0, 1),
+            (-1, 1),
+            (-1, 0),
+            (-1, -1),
+        ];
         let mut pos_iter = pos.iter().cycle();
         for _ in 0..(self.last_i % 8) {
             let _ = pos_iter.next();
@@ -107,6 +125,7 @@ pub struct Disc {
     origin: (i32, i32),
     radius: i32,
 }
+
 impl Disc {
     pub fn new(x: i32, y: i32, radius: i32) -> Self {
         Disc {
@@ -116,6 +135,7 @@ impl Disc {
         }
     }
 }
+
 impl Iterator for Disc {
     type Item = (i32, i32);
 
@@ -145,8 +165,9 @@ pub struct Line {
     dy1: i32,
     dx2: i32,
     dy2: i32,
-    finished: bool
+    finished: bool,
 }
+
 impl Line {
     pub fn new(p1: (i32, i32), p2: (i32, i32)) -> Self {
         let (x1, y1) = p1;
@@ -193,16 +214,18 @@ impl Line {
             dy1: dy1,
             dx2: dx2,
             dy2: dy2,
-            finished: false
+            finished: false,
         }
-        
     }
 }
+
 impl Iterator for Line {
     type Item = (i32, i32);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.finished {return None;}
+        if self.finished {
+            return None;
+        }
         let x = self.x1;
         let y = self.y1;
         self.numerator += self.shortest;
@@ -224,8 +247,9 @@ impl Iterator for Line {
 pub struct Path {
     points: VecDeque<(i32, i32)>,
     last_point: Option<(i32, i32)>,
-    curr_line: Line
+    curr_line: Line,
 }
+
 impl Path {
     pub fn new(points: &Vec<(i32, i32)>) -> Self {
         if points.is_empty() {
@@ -235,52 +259,50 @@ impl Path {
             return Path {
                 points: VecDeque::from(vec![points[0], points[0]]),
                 last_point: None,
-                curr_line: Line::new(points[0], points[0])
-            }
+                curr_line: Line::new(points[0], points[0]),
+            };
         }
         return Path {
-                points: VecDeque::from(points.clone()),
-                last_point: None,
-                curr_line: Line::new(points[0], points[1])
-            }
+            points: VecDeque::from(points.clone()),
+            last_point: None,
+            curr_line: Line::new(points[0], points[1]),
+        };
     }
 }
+
 impl Iterator for Path {
     type Item = (i32, i32);
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.curr_line.next() {
-                Some(p) => {
-                    match self.last_point {
-                        Some(q) => {
-                            if p == q {
-                                continue;
-                            }
-                            self.last_point = Some(p);
-                            return Some(p);
-                        },
-                        None => {return Some(p);}
-                    }
-                }
-                None => {
-                    loop {
-                        if self.points.len() <= 2 {
-                            return None;
-                        }
-                        self.points.remove(0);
-                        let p1 = self.points[0];
-                        let p2 = self.points[1];
-                        if p1 == p2 {
+                Some(p) => match self.last_point {
+                    Some(q) => {
+                        if p == q {
                             continue;
                         }
-                        else {
-                            self.curr_line = Line::new(p1, p2);
-                            let _ = self.curr_line.next();
-                            break;
-                        }
+                        self.last_point = Some(p);
+                        return Some(p);
                     }
-                }
+                    None => {
+                        return Some(p);
+                    }
+                },
+                None => loop {
+                    if self.points.len() <= 2 {
+                        return None;
+                    }
+                    self.points.remove(0);
+                    let p1 = self.points[0];
+                    let p2 = self.points[1];
+                    if p1 == p2 {
+                        continue;
+                    } else {
+                        self.curr_line = Line::new(p1, p2);
+                        let _ = self.curr_line.next();
+                        break;
+                    }
+                },
             }
         }
     }
