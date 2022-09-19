@@ -1,4 +1,3 @@
-use super::rectangle;
 use crate::blend_color;
 
 use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
@@ -69,17 +68,19 @@ impl Limage {
     }
 
     pub fn paste(&mut self, position: (i32, i32), other: &Limage) {
-        for p in rectangle(
-            (0, 0),
-            (other.width() as i32 - 1, other.height() as i32 - 1),
-        ) {
-            let pos = (position.0 + p.0, position.1 + p.1);
-            if self.in_bounds(pos) {
-                let old_color = self.get_rgba(pos).unwrap();
-                let color = other.get_rgba(p).unwrap();
-                let color = blend_color(old_color, color);
-                self.put_rgba(pos, color);
+       
+        for y in 0..other.height() as i32 {
+            for x in 0..other.width() as i32 {
+                let pos = (position.0 + x, position.1 + y);
+                if self.in_bounds(pos) {
+                    let old_color = self.get_rgba(pos).unwrap();
+                    let color = other.get_rgba((x, y)).unwrap();
+                    let color = blend_color(old_color, color);
+                    self.put_rgba(pos, color);
+                }
             }
-        }
+        } 
+            
+        
     }
 }

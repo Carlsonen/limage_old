@@ -1,18 +1,16 @@
 use limage::prelude::*;
 
 fn main() {
-    let mut img = Limage::new(501, 501);
+    let mut img = Limage::new(501, 501).with_color(RED);
 
-    for p in disc((250, 250), 250) {
-        img.put_rgb(p, [255; 3]);
+    for p in Circle::new((250, 250), 100) {
+        img.put_rgb(p, GREEN);
     }
 
-    let corners: Vec<(i32, i32)> = vec![(0, 0), (400, 39), (100, 490), (0, 1)];
-    let points: Vec<(i32, i32)> = path(&corners).collect();
-    for (i, p) in points.iter().enumerate() {
-        let hue = i as f32 * 360.0 / points.len() as f32;
-        let rgb = hsl_to_rgb([hue, 1.0, 0.5]);
-        img.put_rgb(*p, rgb);
+    for o in Line::new((10, 10), (490, 490)).step_by(7) {
+        for p in Circle::new(o, 10) {
+            img.put_rgb(p, GREEN);
+        }
     }
 
     img.save("shit.png").unwrap();
