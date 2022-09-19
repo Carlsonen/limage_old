@@ -1,4 +1,4 @@
-use limage::*;
+use limage::prelude::*;
 
 fn main() {
     let mut img = Limage::new(501, 501);

@@ -1,7 +1,9 @@
-use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
+pub mod core;
+pub mod prelude;
+pub mod shiterators;
 
-mod shiterators;
 use shiterators::*;
+use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
 
 pub fn rectangle(p1: (i32, i32), p2: (i32, i32)) -> Rectangle {
     let (x, y) = p1;
@@ -115,6 +117,7 @@ pub fn blend_color(old: [u8; 4], new: [u8; 4]) -> [u8; 4] {
     let a = a.max(old[3] as f32 / 255.) * 255.999;
     [red as u8, green as u8, blue as u8, a as u8]
 }
+
 // range (360 1 1)
 pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     let h = hsl[0] % 360.0;
