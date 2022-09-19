@@ -33,6 +33,17 @@ impl Limage {
             imgbuff: ImageBuffer::new(width, height),
         }
     }
+    pub fn open(path: &String) -> Result<Self, String> {
+        match image::open(path) {
+            Ok(file) => {
+                let img: RgbaImage = file.into_rgba8();
+                return Ok(Limage { imgbuff: img });
+            }
+            Err(_) => {
+                return Err("Could not open file".to_string());
+            }
+        }
+    }
     pub fn with_color(mut self, color: [u8; 3]) -> Self {
         for y in 0..self.height() {
             for x in 0..self.width() {
