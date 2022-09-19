@@ -124,9 +124,9 @@ pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
     };
 
     [
-        ((rgb_tmp.0 + m) * 255.999) as u8,
-        ((rgb_tmp.1 + m) * 255.999) as u8,
-        ((rgb_tmp.2 + m) * 255.999) as u8,
+        ((rgb_tmp.0 + m) * 256.) as u8,
+        ((rgb_tmp.1 + m) * 256.) as u8,
+        ((rgb_tmp.2 + m) * 256.) as u8,
     ]
 }
 
@@ -139,3 +139,15 @@ pub const CYAN: [u8; 3] = [0, 255, 255];
 
 pub const BEIGE: [u8; 3] = [222, 184, 135];
 pub const FOREST_GREEN: [u8; 3] = [34, 139, 34];
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn hsl_is_correct() {
+        use super::hsl_to_rgb;
+
+        assert_eq!(hsl_to_rgb([0., 0., 0.]), [0, 0, 0]);
+        assert_eq!(hsl_to_rgb([360., 0.5, 1.]), [255, 255, 255]);
+        assert_eq!(hsl_to_rgb([120., 0.5, 0.25]), [32, 96, 32]);
+    }
+}
