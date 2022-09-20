@@ -16,7 +16,9 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
-    pub fn new(x: i32, y: i32, w: i32, h: i32) -> Self {
+    pub fn new(p1: (i32, i32), p2: (i32, i32)) -> Self {
+        let (x, y) = p1;
+        let (w, h) = p2;
         let step_x = match w {
             _ if w < 0 => -1,
             _ => 1,
@@ -129,10 +131,12 @@ pub struct Disc {
 }
 
 impl Disc {
-    pub fn new(x: i32, y: i32, radius: i32) -> Self {
+    pub fn new(origin: (i32, i32), radius: u32) -> Self {
+        let radius = radius as i32;
+        let (x, y) = origin;
         Disc {
-            bounds: Rectangle::new(x - radius, y - radius, x + radius + 1, y + radius + 1),
-            origin: (x, y),
+            bounds: Rectangle::new((x - radius, y - radius), (x + radius + 1, y + radius + 1)),
+            origin: origin,
             radius,
         }
     }
@@ -327,7 +331,7 @@ impl Text {
             text: text,
             size: size as i32,
             current_index: 0,
-            current_box: Rectangle::new(0, 0, 6 * size as i32 - 1, 12 * size as i32 - 1)
+            current_box: Rectangle::new((0, 0), (6 * size as i32 - 1, 12 * size as i32 - 1))
         }
     }
 }
@@ -371,7 +375,7 @@ impl Iterator for Text {
                     if self.current_index == self.text.len() {
                         return None;
                     }
-                    self.current_box = Rectangle::new(0, 0, 6 * self.size - 1, 12 * self.size - 1);
+                    self.current_box = Rectangle::new((0, 0), (6 * self.size - 1, 12 * self.size - 1));
                 }
             }
         }
