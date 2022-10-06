@@ -1,4 +1,4 @@
-use crate::blend_color;
+use crate::{blend_color, shiterators};
 
 use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
 
@@ -71,6 +71,15 @@ impl Limage {
         }
     }
 
+    pub fn get_rgb(&self, p: (i32, i32)) -> Option<[u8; 3]> {
+        if self.in_bounds(p) {
+            let (x, y) = p;
+            let rgba = self.imgbuff.get_pixel(x as u32, y as u32).0;
+            return Some([rgba[0], rgba[1], rgba[2]]);
+        }
+        None
+    }
+
     pub fn get_rgba(&self, p: (i32, i32)) -> Option<[u8; 4]> {
         if self.in_bounds(p) {
             let (x, y) = p;
@@ -80,7 +89,6 @@ impl Limage {
     }
 
     pub fn paste(&mut self, position: (i32, i32), other: &Limage) {
-       
         for y in 0..other.height() as i32 {
             for x in 0..other.width() as i32 {
                 let pos = (position.0 + x, position.1 + y);
@@ -91,8 +99,30 @@ impl Limage {
                     self.put_rgba(pos, color);
                 }
             }
-        } 
-            
-        
+        }
+    }
+}
+
+// shiterators shortcut
+impl Limage {
+    pub fn draw_rectangle(&mut self, p1: (i32, i32), p2: (i32, i32), color: [u8; 3]) {
+        for p in shiterators::Rectangle::new(p1, p2) {
+            self.put_rgb(p, color);
+        }
+    }
+    pub fn draw_circle(&mut self, origin: (i32, i32), radius: u32, color: [u8; 3]) {
+        for p in shiterators::Circle::new(origin, radius) {
+            self.put_rgb(p, color);
+        }
+    }
+    pub fn draw_disc(&mut self, origin: (i32, i32), radius: u32, color: [u8; 3]) {
+        for p in shiterators::Disc::new(origin, radius) {
+            self.put_rgb(p, color);
+        }
+    }
+    pub fn draw_line(&mut self, p1: (i32, i32), p2: (i32, i32), color: [u8; 3]) {
+        for p in shiterators::Line::new(p1, p2) {
+            self.put_rgb(p, color);
+        }
     }
 }
