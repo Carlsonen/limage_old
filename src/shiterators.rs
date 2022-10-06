@@ -250,33 +250,63 @@ impl Iterator for Line {
     }
 }
 
-pub struct Path {
+
+pub struct PathCircuit {
     points: VecDeque<(i32, i32)>,
     last_point: Option<(i32, i32)>,
     curr_line: Line,
+    is_circuit: bool,
+    start: (i32, i32),
 }
 
-impl Path {
-    pub fn new(points: &Vec<(i32, i32)>) -> Self {
+impl PathCircuit {
+    pub fn new_path(points: &Vec<(i32, i32)>) -> Self {
         if points.is_empty() {
             panic!("why the fuck would you input an empty list of points");
         }
         if points.len() == 1 {
-            return Path {
+            return PathCircuit {
                 points: VecDeque::from(vec![points[0], points[0]]),
                 last_point: None,
                 curr_line: Line::new(points[0], points[0]),
+                is_circuit: false,
+                start: (0, 0) // doesnt matter
             };
         }
-        return Path {
+        return PathCircuit {
             points: VecDeque::from(points.clone()),
             last_point: None,
             curr_line: Line::new(points[0], points[1]),
+            is_circuit: false,
+            start: (0, 0) // doesnt matter
+        };
+    }
+    pub fn new_circuit(points: &Vec<(i32, i32)>) -> Self {
+        if points.is_empty() {
+            panic!("why the fuck would you input an empty list of points");
+        }
+        if points.len() == 1 {
+            return PathCircuit {
+                points: VecDeque::from(vec![points[0], points[0]]),
+                last_point: None,
+                curr_line: Line::new(points[0], points[0]),
+                is_circuit: false,
+                start: (0, 0) // doesnt matter
+            };
+        }
+        let mut new_points = points.clone();
+        new_points.push(points[0]);
+        return PathCircuit {
+            points: VecDeque::from(new_points.clone()),
+            last_point: None,
+            curr_line: Line::new(new_points[0], new_points[1]),
+            is_circuit: true,
+            start: points[0].clone()
         };
     }
 }
 
-impl Iterator for Path {
+impl Iterator for PathCircuit {
     type Item = (i32, i32);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -287,10 +317,14 @@ impl Iterator for Path {
                         if p == q {
                             continue;
                         }
+                        if self.is_circuit && self.points.len() <= 2 && p == self.start {
+                            return None;
+                        }
                         self.last_point = Some(p);
                         return Some(p);
                     }
                     None => {
+                        self.last_point = Some(p);
                         return Some(p);
                     }
                 },

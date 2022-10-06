@@ -1,1 +1,1 @@
-pub use super::{Circle, Disc, Line, Path, Rectangle};
+pub use super::{Circle, Disc, Line, PathCircuit, Rectangle};
