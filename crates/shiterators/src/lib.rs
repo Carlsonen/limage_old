@@ -1,8 +1,5 @@
+use image::{ImageBuffer, RgbaImage};
 use std::collections::VecDeque;
-
-use crate::core::Limage;
-
-pub mod prelude;
 
 pub struct Rectangle {
     pos_x: i32,
@@ -352,7 +349,7 @@ pub struct Text {
     position: (i32, i32),
     text: String,
     size: i32,
-    font_sheet: Limage,
+    font_sheet: RgbaImage,
     current_index: usize,
     current_box: Rectangle,
 }
@@ -361,7 +358,7 @@ impl Text {
     pub fn new(position: (i32, i32), text: &String, size: u32) -> Self {
         Text {
             position: position,
-            font_sheet: Limage::open("assets/font.png").unwrap(),
+            font_sheet: image::open("assets/font.png").unwrap().into_rgba8(),
             text: text.clone(),
             size: size as i32,
             current_index: 0,
@@ -395,7 +392,7 @@ impl Iterator for Text {
             match self.current_box.next() {
                 Some((x, y)) => {
                     let pos = (x / self.size + 6 * (char_index % 21), y / self.size + 12 * (char_index / 21));
-                    let sample = self.font_sheet.get_rgba(pos).unwrap();
+                    let sample = self.font_sheet.get_pixel(pos.0 as u32, pos.1 as u32).0;
                     if sample == [255; 4] {
                         let shit = (self.position.0 + self.size * 6 * self.current_index as i32 + x, self.position.1 + y);
                         return Some(shit);

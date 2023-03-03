@@ -1,5 +1,4 @@
-use crate::{blend_color, shiterators};
-
+use shiterators::*;
 use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -93,9 +92,7 @@ impl Limage {
             for x in 0..other.width() as i32 {
                 let pos = (position.0 + x, position.1 + y);
                 if self.in_bounds(pos) {
-                    let old_color = self.get_rgba(pos).unwrap();
                     let color = other.get_rgba((x, y)).unwrap();
-                    let color = blend_color(old_color, color);
                     self.put_rgba(pos, color);
                 }
             }
