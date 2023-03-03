@@ -101,6 +101,17 @@ impl Limage {
     pub fn resize_to(&mut self, width: u32, height: u32) {
         self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3)
     }
+
+    pub fn as_rgb_buf(&self) -> Vec<u8> {
+        let mut bruh = vec![];
+        let buf = self.imgbuff.as_raw();
+        for (i, b) in buf.iter().enumerate() {
+            if i % 4 != 3 {
+                bruh.push(*b);
+            }
+        } 
+        bruh
+    }
 }
 
 // shiterators shortcut
