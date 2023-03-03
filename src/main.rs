@@ -1,5 +1,5 @@
 use limage::*;
-use shiterators::{Disc, Text};
+use shiterators::{Disc, Text, WireFrame};
 
 fn main() {
     let mut img = Limage::new(101, 101).with_color([0, 0, 64]);

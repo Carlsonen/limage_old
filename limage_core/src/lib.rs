@@ -1,4 +1,4 @@
-use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
+use image::{ImageBuffer, ImageResult, Pixel, RgbaImage, imageops::{FilterType, self}};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Limage {
@@ -96,6 +96,10 @@ impl Limage {
                 }
             }
         }
+    }
+
+    pub fn resize_to(&mut self, width: u32, height: u32) {
+        self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3)
     }
 }
 

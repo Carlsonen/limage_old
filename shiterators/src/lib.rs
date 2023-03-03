@@ -412,3 +412,40 @@ impl Iterator for Text {
         }
     }
 }
+
+pub struct WireFrame {
+    vertex_table: Vec<(i32, i32)>,
+    edge_table: Vec<(usize, usize)>,
+    curr_edge: usize,
+    curr_line: Line,
+}
+
+impl WireFrame {
+    pub fn new(vertex_table: &Vec<(i32, i32)>, edge_table: &Vec<(usize, usize)>) -> Self {
+        if edge_table.is_empty() {
+            panic!("no edges");
+        }
+        let (e1, e2) = edge_table[0];
+        WireFrame { vertex_table: vertex_table.clone(), edge_table: edge_table.clone(), curr_edge: 0, curr_line: Line::new(vertex_table[e1], vertex_table[e2]) }
+    }
+}
+
+impl Iterator for WireFrame {
+    type Item = (i32, i32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.curr_line.next() {
+            Some(p) => {Some(p)},
+            None => {
+                self.curr_edge += 1;
+                if self.curr_edge >= self.edge_table.len() {
+                    return None;
+                }
+                let (e1, e2) = self.edge_table[self.curr_edge];
+                self.curr_line = Line::new(self.vertex_table[e1], self.vertex_table[e2]);
+
+                self.next()
+            }
+        }
+    }
+}
