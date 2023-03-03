@@ -1,14 +1,19 @@
 use limage::*;
-use shiterators::*;
+use shiterators::{Disc, Text};
 
 fn main() {
-    let mut img = Limage::new(101, 101);
-    let points: Vec<(i32, i32)> = shiterators::Disc::new((50, 50), 10).collect();
+    let mut img = Limage::new(101, 101).with_color([0, 0, 64]);
 
+    let points: Vec<(i32, i32)> = Disc::new((50, 60), 35).collect();
     for (i, p) in points.iter().enumerate() {
         let hue = 360. * i as f32 / points.len() as f32;
         img.put_rgb(*p, hsl_to_rgb([hue, 1.0, 0.5]));
     }
+
+    Text::new((5, 5), "i like a limage", 1).for_each(|p| {
+        img.put_rgb(p, [255, 0, 0]);
+    });
+
     img.save("test.png").unwrap();
 }
 

@@ -1,4 +1,3 @@
-use shiterators::*;
 use image::{ImageBuffer, ImageResult, Pixel, RgbaImage};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

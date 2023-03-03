@@ -355,11 +355,11 @@ pub struct Text {
 }
 
 impl Text {
-    pub fn new(position: (i32, i32), text: &String, size: u32) -> Self {
+    pub fn new(position: (i32, i32), text: &str, size: u32) -> Self {
         Text {
             position: position,
             font_sheet: image::open("assets/font.png").unwrap().into_rgba8(),
-            text: text.clone(),
+            text: text.to_string(),
             size: size as i32,
             current_index: 0,
             current_box: Rectangle::new((0, 0), (6 * size as i32 - 1, 12 * size as i32 - 1))
