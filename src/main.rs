@@ -1,8 +1,8 @@
 use limage::*;
-use shiterators::{Disc, Text, WireFrame};
+use shiterators::{Disc, Text};
 
 fn main() {
-    let mut img = Limage::new(101, 101).with_color([0, 0, 64]);
+    let mut img = LimageRgb::new(101, 101).with_color([0, 0, 64]);
 
     let points: Vec<(i32, i32)> = Disc::new((50, 60), 35).collect();
     for (i, p) in points.iter().enumerate() {
@@ -24,8 +24,8 @@ fn bezier(t: f32, points: &Vec<(i32, i32)>) -> (i32, i32) {
     let mut points: Vec<(f32, f32)> = points.iter().map(|&(x, y)| (x as f32, y as f32)).collect();
     while points.len() > 1 {
         let mut new_points = vec![];
-        for i in 0..points.len()-1 {
-            new_points.push(lerp(t, points[i], points[i+1]));
+        for i in 0..points.len() - 1 {
+            new_points.push(lerp(t, points[i], points[i + 1]));
         }
         points = new_points.clone();
     }
@@ -34,5 +34,5 @@ fn bezier(t: f32, points: &Vec<(i32, i32)>) -> (i32, i32) {
 }
 
 fn lerp(t: f32, p1: (f32, f32), p2: (f32, f32)) -> (f32, f32) {
-    (t * (p2.0-p1.0) + p1.0, t * (p2.1-p1.1) + p1.1)
+    (t * (p2.0 - p1.0) + p1.0, t * (p2.1 - p1.1) + p1.1)
 }

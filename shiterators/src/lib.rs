@@ -1,4 +1,4 @@
-use image::{ImageBuffer, RgbaImage};
+use image::RgbaImage;
 use std::collections::VecDeque;
 
 pub struct Rectangle {
