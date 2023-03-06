@@ -1,5 +1,5 @@
 pub use limage_core::*;
-//pub use shiterators::*;
+pub use shiterators::*;
 
 // range (360 1 1)
 pub fn hsl_to_rgb(hsl: [f32; 3]) -> [u8; 3] {
