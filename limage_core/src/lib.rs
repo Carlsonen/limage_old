@@ -1,4 +1,9 @@
-use image::{ImageBuffer, ImageResult, Pixel, RgbImage, RgbaImage, imageops::{FilterType, self}};
+use image::{ImageBuffer, ImageResult, Pixel, RgbImage, Rgb, RgbaImage, imageops::{FilterType, self}};
+
+use imageproc::drawing::{draw_text_mut, text_size};
+use rusttype::{Font, Scale};
+use std::env;
+use std::path::Path;
 
 pub trait Limage {
     type ImgType;
@@ -74,23 +79,20 @@ impl Limage for LimageRgb {
     }
 
     fn with_color(mut self, color: [u8; 3]) -> Self::ImgType {
-        for y in 0..self.height() {
-            for x in 0..self.width() {
-                self.imgbuff.put_pixel(x, y, image::Rgb(color));
-            }
-        }
-
+        self.imgbuff.pixels_mut().for_each(|p| {
+            *p = image::Rgb(color);
+        });
         self
     }
-
+    #[inline]
     fn save(&self, path: &str) -> ImageResult<()> {
         self.imgbuff.save(path)
     }
-
+    #[inline]
     fn width(&self) -> u32 {
         self.imgbuff.width()
     }
-
+    #[inline]
     fn height(&self) -> u32 {
         self.imgbuff.height()
     }
@@ -107,7 +109,7 @@ impl Limage for LimageRgb {
         if self.in_bounds(p) {
             let (x, y) = p;
             let rgb = self.imgbuff.get_pixel(x as u32, y as u32).0;
-            return Some([rgb[0], rgb[1], rgb[2]]);
+            return Some(rgb);
         }
         None
     }
@@ -123,7 +125,7 @@ impl Limage for LimageRgb {
             }
         }
     }
-
+    #[inline]
     fn as_rgb_buf(&self) -> Vec<u8> {
         self.imgbuff.to_vec()
     }
@@ -132,6 +134,7 @@ impl Limage for LimageRgb {
         self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3)
     }
 }
+
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LimageRgba {
@@ -234,4 +237,26 @@ impl Limage for LimageRgba {
     fn resize_to(&mut self, width: u32, height: u32) {
         self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3)
     }
+}
+
+impl LimageRgb {
+    pub fn write_text(&mut self, pos: (i32, i32), color: [u8; 3], text: &str, size: f32, font: &str) {
+        let font = std::fs::read(format!("./assets/{font}")).unwrap();
+        let font = Font::try_from_vec(font).unwrap();
+        let scale = Scale {
+            x: size * 2.0,
+            y: size,
+        };
+        draw_text_mut(&mut self.imgbuff, Rgb(color), 0, 0, scale, &font, text);
+    }
+}
+
+pub fn sizeof_text(text: &str, size: f32, font: &str) -> (i32, i32) {
+    let font = std::fs::read(format!("./assets/{font}")).unwrap();
+    let font = Font::try_from_vec(font).unwrap();
+    let scale = Scale {
+        x: size * 2.0,
+        y: size,
+    };
+    text_size(scale, &font, text)
 }

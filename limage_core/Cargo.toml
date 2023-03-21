@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 image = "0.24.5"
 shiterators = { path = "../shiterators" }
+imageproc = "0.23.0"
+rusttype = "0.9.3"

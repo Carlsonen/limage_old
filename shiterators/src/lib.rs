@@ -247,7 +247,6 @@ impl Iterator for Line {
     }
 }
 
-
 pub struct PathCircuit {
     points: VecDeque<(i32, i32)>,
     last_point: Option<(i32, i32)>,
@@ -427,6 +426,13 @@ impl WireFrame {
         }
         let (e1, e2) = edge_table[0];
         WireFrame { vertex_table: vertex_table.clone(), edge_table: edge_table.clone(), curr_edge: 0, curr_line: Line::new(vertex_table[e1], vertex_table[e2]) }
+    }
+    pub fn from_3d(vertex_table: &Vec<(f64, f64, f64)>, d: f64, edge_table: &Vec<(usize, usize)>, res: i32) -> Self {
+        let vertex_table_2d = vertex_table.iter()
+            .map(|(x, y, z)| ((x / (d + z) * res as f64 * 0.5) as i32, (y / (d + z) * res as f64 * 0.5) as i32))
+            .map(|(x, y)| (x + res / 2, y + res / 2))
+            .collect();
+        Self::new(&vertex_table_2d, edge_table)
     }
 }
 

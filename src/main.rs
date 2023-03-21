@@ -2,18 +2,18 @@ use limage::*;
 use shiterators::{Disc, Text};
 
 fn main() {
-    let mut img = LimageRgb::new(101, 101).with_color([0, 0, 64]);
-
-    let points: Vec<(i32, i32)> = Disc::new((50, 60), 35).collect();
-    for (i, p) in points.iter().enumerate() {
-        let hue = 360. * i as f32 / points.len() as f32;
-        img.put_rgb(*p, hsl_to_rgb([hue, 1.0, 0.5]));
+    let mut img = LimageRgb::new(500, 500).with_color([0, 64, 64]);
+    let p = 1.0;
+    let q = -1.0;
+    let vertex_table = vec![(q,q,q),(q,q,p),(q,p,p),(q,p,q),(p,q,q),(p,q,p),(p,p,p),(p,p,q)];
+    let edge_table = vec![(0,1),(1,2),(2,3),(3,0),
+                          (4,5),(5,6),(6,7),(7,4),
+                          (0,4),(1,5),(2,6),(3,7)];
+    for p in WireFrame::from_3d(&vertex_table, 2.5, &edge_table, 500) {
+        img.put_rgb(p, [255; 3]);
     }
-
-    Text::new((5, 5), "i like a limage", 1).for_each(|p| {
-        img.put_rgb(p, [255, 0, 0]);
-    });
-
+    println!("{:?}", sizeof_text("helloworld", 40.0, "TumsBasic.ttf"));
+    img.write_text((0,0), [255; 3], "helloworld", 40.0, "TumsBasic.ttf");
     img.save("test.png").unwrap();
 }
 
