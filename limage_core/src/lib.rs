@@ -225,15 +225,15 @@ impl Limage for LimageRgba {
     }
 }
 
-impl LimageRgb {
-    pub fn write_text(&mut self, pos: (i32, i32), color: [u8; 3], text: &str, size: f32, font: &str) {
+impl LimageRgba {
+    pub fn write_text(&mut self, pos: (i32, i32), color: [u8; 4], text: &str, size: f32, font: &str) {
         let font = std::fs::read(format!("./assets/{font}")).unwrap();
         let font = Font::try_from_vec(font).unwrap();
         let scale = Scale {
             x: size * 2.0,
             y: size,
         };
-        draw_text_mut(&mut self.imgbuff, Rgb(color), pos.0, pos.1, scale, &font, text);
+        draw_text_mut(&mut self.imgbuff, Rgba(color), pos.0, pos.1, scale, &font, text);
     }
 }
 
