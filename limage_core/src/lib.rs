@@ -1,4 +1,4 @@
-use image::{ImageBuffer, ImageResult, Pixel, RgbImage, Rgb, RgbaImage, imageops::{FilterType, self}, DynamicImage};
+use image::{ImageBuffer, ImageResult, Pixel, RgbImage, Rgb, Rgba, RgbaImage, imageops::{FilterType, self}, DynamicImage};
 
 use imageproc::drawing::{draw_text_mut, text_size};
 use rusttype::{Font, Scale};
