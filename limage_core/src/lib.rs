@@ -114,16 +114,9 @@ impl Limage for LimageRgb {
     }
 
     fn paste(&mut self, position: (i32, i32), other: &Self) {
-        for y in 0..other.height() as i32 {
-            for x in 0..other.width() as i32 {
-                let pos = (position.0 + x, position.1 + y);
-                if self.in_bounds(pos) {
-                    let color = other.get_rgb((x, y)).unwrap();
-                    self.put_rgb(pos, color);
-                }
-            }
-        }
+        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0, position.1);
     }
+    
     #[inline]
     fn as_rgb_buf(&self) -> Vec<u8> {
         self.imgbuff.to_vec()
@@ -140,7 +133,6 @@ impl Limage for LimageRgb {
 pub struct LimageRgba {
     pub imgbuff: RgbaImage,
 }
-
 
 impl LimageRgba {
     pub fn put_rgba(&mut self, p: (i32, i32), color: [u8; 4]) {
@@ -213,15 +205,7 @@ impl Limage for LimageRgba {
     }
 
     fn paste(&mut self, position: (i32, i32), other: &Self) {
-        for y in 0..other.height() as i32 {
-            for x in 0..other.width() as i32 {
-                let pos = (position.0 + x, position.1 + y);
-                if self.in_bounds(pos) {
-                    let color = other.get_rgba((x, y)).unwrap();
-                    self.put_rgba(pos, color);
-                }
-            }
-        }
+        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0, position.1);
     }
 
     fn as_rgb_buf(&self) -> Vec<u8> {
