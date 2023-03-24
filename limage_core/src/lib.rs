@@ -1,10 +1,9 @@
-use image::{ImageBuffer, ImageResult, Pixel, RgbImage, Rgb, RgbaImage, imageops::{FilterType, self}};
+use image::{ImageBuffer, ImageResult, Pixel, RgbImage, Rgb, RgbaImage, imageops::{FilterType, self}, DynamicImage};
 
 use imageproc::drawing::{draw_text_mut, text_size};
 use rusttype::{Font, Scale};
-use std::env;
-use std::path::Path;
-
+use reqwest;
+use rand;
 pub trait Limage {
     type ImgType;
 
@@ -33,7 +32,7 @@ pub trait Limage {
 
     fn paste(&mut self, position: (i32, i32), other: &Self);
 
-    fn resize_to(&mut self, width: u32, height: u32);
+    fn as_resized(self, width: u32, height: u32) -> Self;
 
     fn as_rgb_buf(&self) -> Vec<u8>;
 
@@ -130,8 +129,9 @@ impl Limage for LimageRgb {
         self.imgbuff.to_vec()
     }
 
-    fn resize_to(&mut self, width: u32, height: u32) {
-        self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3)
+    fn as_resized(mut self, width: u32, height: u32) -> Self {
+        self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3);
+        self
     }
 }
 
@@ -140,6 +140,7 @@ impl Limage for LimageRgb {
 pub struct LimageRgba {
     pub imgbuff: RgbaImage,
 }
+
 
 impl LimageRgba {
     pub fn put_rgba(&mut self, p: (i32, i32), color: [u8; 4]) {
@@ -234,8 +235,9 @@ impl Limage for LimageRgba {
         bruh
     }
 
-    fn resize_to(&mut self, width: u32, height: u32) {
-        self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3)
+    fn as_resized(mut self, width: u32, height: u32) -> Self {
+        self.imgbuff = imageops::resize(&self.imgbuff, width, height, FilterType::Lanczos3);
+        self
     }
 }
 
@@ -247,7 +249,7 @@ impl LimageRgb {
             x: size * 2.0,
             y: size,
         };
-        draw_text_mut(&mut self.imgbuff, Rgb(color), 0, 0, scale, &font, text);
+        draw_text_mut(&mut self.imgbuff, Rgb(color), pos.0, pos.1, scale, &font, text);
     }
 }
 
@@ -259,4 +261,41 @@ pub fn sizeof_text(text: &str, size: f32, font: &str) -> (i32, i32) {
         y: size,
     };
     text_size(scale, &font, text)
+}
+
+pub enum PexelMode {
+    Original,
+    Landscape,
+    Portrait,
+}
+
+pub fn from_google(query: &str, mode: PexelMode) -> DynamicImage {
+    let pexels_api_client = pexels::Pexels::new("kWALdmnm5cdOAOU08nEEhrFd8tdjno4QdA5bda7LuXvH2JL04AV4ebnT".to_owned());
+    let shit = pexels_api_client.photo_search(query.to_string(), 256, 1);
+    let n = &shit["photos"].as_array().unwrap().len();
+    if *n == 0 { panic!("found no image with query '{}'", query) }
+    let i: usize = rand::random::<usize>() % n;
+    let mode = match mode {
+        PexelMode::Original => "original",
+        PexelMode::Landscape => "landscape",
+        PexelMode::Portrait => "portrait"
+    };
+    let url = shit["photos"][i]["src"][mode].as_str().unwrap();
+    let data = reqwest::blocking::get(url).unwrap().bytes().unwrap();
+    let img = image::load_from_memory(&data).unwrap();
+    img
+}
+
+pub trait ToLimage {
+    fn to_limage_rgb(self) -> LimageRgb;
+    fn to_limage_rgba(self) -> LimageRgba;
+}
+
+impl ToLimage for DynamicImage {
+    fn to_limage_rgb(self) -> LimageRgb {
+        LimageRgb { imgbuff: self.into_rgb8() }
+    }
+    fn to_limage_rgba(self) -> LimageRgba {
+        LimageRgba { imgbuff: self.into_rgba8() }
+    }
 }
