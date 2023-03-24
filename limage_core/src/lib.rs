@@ -114,9 +114,9 @@ impl Limage for LimageRgb {
     }
 
     fn paste(&mut self, position: (i32, i32), other: &Self) {
-        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0, position.1);
+        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0 as i64, position.1 as i64);
     }
-    
+
     #[inline]
     fn as_rgb_buf(&self) -> Vec<u8> {
         self.imgbuff.to_vec()
@@ -205,7 +205,7 @@ impl Limage for LimageRgba {
     }
 
     fn paste(&mut self, position: (i32, i32), other: &Self) {
-        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0, position.1);
+        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0 as i64, position.1 as i64);
     }
 
     fn as_rgb_buf(&self) -> Vec<u8> {
