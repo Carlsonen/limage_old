@@ -1,6 +1,6 @@
 use limage::*;
-use shiterators::{Disc, Text};
 
+#[allow(unused)]
 fn test1() {
     let mut img = LimageRgb::new(500, 500).with_color([0, 64, 64]);
     let p = 1.0;
@@ -32,8 +32,6 @@ fn test1() {
     for p in WireFrame::from_3d(&vertex_table, 2.5, &edge_table, 500) {
         img.put_rgb(p, [255; 3]);
     }
-    println!("{:?}", sizeof_text("helloworld", 40.0, "TumsBasic.ttf"));
-    img.write_text((0, 0), [255; 3], "helloworld", 40.0, "TumsBasic.ttf");
     img.save("test.png").unwrap();
 }
 
@@ -43,24 +41,4 @@ fn test2() {
 }
 fn main() {
     test2();
-}
-
-fn bezier(t: f32, points: &Vec<(i32, i32)>) -> (i32, i32) {
-    if points.len() < 2 {
-        panic!("idiot");
-    }
-    let mut points: Vec<(f32, f32)> = points.iter().map(|&(x, y)| (x as f32, y as f32)).collect();
-    while points.len() > 1 {
-        let mut new_points = vec![];
-        for i in 0..points.len() - 1 {
-            new_points.push(lerp(t, points[i], points[i + 1]));
-        }
-        points = new_points.clone();
-    }
-    let p = points[0];
-    (p.0 as i32, p.1 as i32)
-}
-
-fn lerp(t: f32, p1: (f32, f32), p2: (f32, f32)) -> (f32, f32) {
-    (t * (p2.0 - p1.0) + p1.0, t * (p2.1 - p1.1) + p1.1)
 }

@@ -1,9 +1,12 @@
-use image::{ImageBuffer, ImageResult, Pixel, RgbImage, Rgb, Rgba, RgbaImage, imageops::{FilterType, self}, DynamicImage};
+use image::{
+    imageops::{self, FilterType},
+    DynamicImage, ImageBuffer, ImageResult, Pixel, RgbImage, Rgba, RgbaImage,
+};
 
 use imageproc::drawing::{draw_text_mut, text_size};
-use rusttype::{Font, Scale};
-use reqwest;
 use rand;
+use reqwest;
+use rusttype::{Font, Scale};
 pub trait Limage {
     type ImgType;
 
@@ -67,13 +70,17 @@ impl Limage for LimageRgb {
     type ImgType = LimageRgb;
 
     fn new(width: u32, height: u32) -> Self::ImgType {
-        Self { imgbuff: ImageBuffer::new(width, height) }
+        Self {
+            imgbuff: ImageBuffer::new(width, height),
+        }
     }
 
     fn open(path: &str) -> Result<Self::ImgType, String> {
         match image::open(path) {
-            Ok(img) => Ok(Self { imgbuff: img.into_rgb8() }),
-            Err(e) => Err(e.to_string())
+            Ok(img) => Ok(Self {
+                imgbuff: img.into_rgb8(),
+            }),
+            Err(e) => Err(e.to_string()),
         }
     }
 
@@ -114,7 +121,12 @@ impl Limage for LimageRgb {
     }
 
     fn paste(&mut self, position: (i32, i32), other: &Self) {
-        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0 as i64, position.1 as i64);
+        imageops::overlay(
+            &mut self.imgbuff,
+            &other.imgbuff,
+            position.0 as i64,
+            position.1 as i64,
+        );
     }
 
     #[inline]
@@ -127,7 +139,6 @@ impl Limage for LimageRgb {
         self
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LimageRgba {
@@ -155,13 +166,17 @@ impl Limage for LimageRgba {
     type ImgType = LimageRgba;
 
     fn new(width: u32, height: u32) -> Self::ImgType {
-        Self { imgbuff: ImageBuffer::new(width, height) }
+        Self {
+            imgbuff: ImageBuffer::new(width, height),
+        }
     }
 
     fn open(path: &str) -> Result<Self::ImgType, String> {
         match image::open(path) {
-            Ok(img) => Ok(Self { imgbuff: img.into_rgba8() }),
-            Err(e) => Err(e.to_string())
+            Ok(img) => Ok(Self {
+                imgbuff: img.into_rgba8(),
+            }),
+            Err(e) => Err(e.to_string()),
         }
     }
 
@@ -205,7 +220,12 @@ impl Limage for LimageRgba {
     }
 
     fn paste(&mut self, position: (i32, i32), other: &Self) {
-        imageops::overlay(&mut self.imgbuff, &other.imgbuff, position.0 as i64, position.1 as i64);
+        imageops::overlay(
+            &mut self.imgbuff,
+            &other.imgbuff,
+            position.0 as i64,
+            position.1 as i64,
+        );
     }
 
     fn as_rgb_buf(&self) -> Vec<u8> {
@@ -215,7 +235,7 @@ impl Limage for LimageRgba {
             if i % 4 != 3 {
                 bruh.push(*b);
             }
-        } 
+        }
         bruh
     }
 
@@ -226,14 +246,29 @@ impl Limage for LimageRgba {
 }
 
 impl LimageRgba {
-    pub fn write_text(&mut self, pos: (i32, i32), color: [u8; 4], text: &str, size: f32, font: &str) {
+    pub fn write_text(
+        &mut self,
+        pos: (i32, i32),
+        color: [u8; 4],
+        text: &str,
+        size: f32,
+        font: &str,
+    ) {
         let font = std::fs::read(format!("./assets/{font}")).unwrap();
         let font = Font::try_from_vec(font).unwrap();
         let scale = Scale {
             x: size * 2.0,
             y: size,
         };
-        draw_text_mut(&mut self.imgbuff, Rgba(color), pos.0, pos.1, scale, &font, text);
+        draw_text_mut(
+            &mut self.imgbuff,
+            Rgba(color),
+            pos.0,
+            pos.1,
+            scale,
+            &font,
+            text,
+        );
     }
 }
 
@@ -254,15 +289,18 @@ pub enum PexelMode {
 }
 
 pub fn from_google(query: &str, mode: PexelMode) -> DynamicImage {
-    let pexels_api_client = pexels::Pexels::new("kWALdmnm5cdOAOU08nEEhrFd8tdjno4QdA5bda7LuXvH2JL04AV4ebnT".to_owned());
+    let pexels_api_client =
+        pexels::Pexels::new("kWALdmnm5cdOAOU08nEEhrFd8tdjno4QdA5bda7LuXvH2JL04AV4ebnT".to_owned());
     let shit = pexels_api_client.photo_search(query.to_string(), 256, 1);
     let n = &shit["photos"].as_array().unwrap().len();
-    if *n == 0 { panic!("found no image with query '{}'", query) }
+    if *n == 0 {
+        panic!("found no image with query '{}'", query)
+    }
     let i: usize = rand::random::<usize>() % n;
     let mode = match mode {
         PexelMode::Original => "original",
         PexelMode::Landscape => "landscape",
-        PexelMode::Portrait => "portrait"
+        PexelMode::Portrait => "portrait",
     };
     let url = shit["photos"][i]["src"][mode].as_str().unwrap();
     let data = reqwest::blocking::get(url).unwrap().bytes().unwrap();
@@ -277,9 +315,13 @@ pub trait ToLimage {
 
 impl ToLimage for DynamicImage {
     fn to_limage_rgb(self) -> LimageRgb {
-        LimageRgb { imgbuff: self.into_rgb8() }
+        LimageRgb {
+            imgbuff: self.into_rgb8(),
+        }
     }
     fn to_limage_rgba(self) -> LimageRgba {
-        LimageRgba { imgbuff: self.into_rgba8() }
+        LimageRgba {
+            imgbuff: self.into_rgba8(),
+        }
     }
 }
